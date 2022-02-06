@@ -30,15 +30,11 @@ def probability(data, i, x):
     return d/n
 
 def entropy(data):
-    print(data.size)
     # if the dataset is empty, return 0 for entropy
     if data.size == 0:
         return 0
     else: 
-        print("data right before calling probability")
-        print(data)
         p = probability(data, -1, data[0][-1])
-        print('p= ' + str(p))
         if p == 1:
             h = -1*(p*math.log2(p))
         elif p == 0:
@@ -51,8 +47,8 @@ def entropy(data):
 def error(data):
     total = len(data)
     values, counts = np.unique(data[:, -1], return_counts=True)
-    majority = max(counts[0], counts[1])
-    return majority/total
+    minority = min(counts[0], counts[1])
+    return minority/total
 
 if __name__ == '__main__':
     data = organize(train)
