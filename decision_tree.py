@@ -61,6 +61,7 @@ class Node:
 
     # return the label string with majority vote 
     def majorityVote(self):
+        # do i need to add a case for empty dataset?
         values, counts = np.unique(self.data[:, -1], return_counts=True)
         if values.size == 1:
             return values[0]
@@ -88,18 +89,30 @@ class Node:
 
     # checks of base case constrains are satisfied
     def stopCiteria(self, maxDepth):
-        if self.data == []:
+        if self.data.size == 0:
             return True        
         elif self.depth >= maxDepth:
             return True
         elif self.labelIsPure():
-            print("***************************label is pure!")
             return True
         elif self.identicalAttr():
             return True
         elif self.findmaxMI()[0] <= 0:
             return True
         return False
+
+    # how to write a print function?
+    # prediction are all None
+    '''
+    def printTree(attrMap):
+        if self.left == None and self.right == None:
+            for i in range self.depth:
+                print('| ')
+            print(str(attrMap[self.attr]))
+            values, counts = np.unique(self.data[:, -1], return_counts=True)
+            for i in range(len(values)):
+                print(str(counts[i] + str(values[i]))
+    '''        
 
 # map the index of attrbutes to the string of attributes
 def organizeAttr(data):
@@ -139,14 +152,15 @@ def train(node, maxDepth):
 # input tree root, a dictionary of attributes of an entry, and a dict mapping 
 # attributes index to attributes string
 def predict(node, example, attrMap):
-    if node.left == None and node.right == None:
+    if node.left is None and node.right is None:
         return node.vote
     else:
         attr = attrMap[node.attr] 
         if example[attr] == node.leftval:
-            predict(node.left, example, attrMap)
+            temp = predict(node.left, example, attrMap)
         else:
-            predict(node.right, example, attrMap)
+            temp = predict(node.right, example, attrMap)
+        return temp
 
 # organize test input to an array of dictionaries??
 # is it better to organize the train input into dictionaries or 2d array?
@@ -159,22 +173,47 @@ def organizeExamples(data, attrMap):
         examples.append(e)
     return examples
 
+def error(predictions, data):
+    error = 0
+    for i in range(len(predictions)):
+        if predictions[i] != data[:, -1][i]:
+            error += 1
+    return error/len(data)
+
 if __name__ == '__main__':
     trainAttr = organizeAttr(trainInput)
     trainData = inspection.organize(trainInput)
     trainExample = organizeExamples(trainData, trainAttr)
-    
+    trainPrediction = []
     root = Node(trainData, 0)
     train(root, maxDepth)
     with open(trainOut, 'w') as f_out:
         for example in trainExample:
             prediction = predict(root, example, trainAttr)
+            trainPrediction.append(str(prediction))
             f_out.write(str(prediction) + '\n')
+
+  
 
     testAttr = organizeAttr(testInput)
     testData = inspection.organize(testInput)
     testExample = organizeExamples(testData, testAttr)
+    testPrediction = []
     with open(testOut, 'w') as f_out:
         for example in testExample:
             prediction = predict(root, example, testAttr)
+            testPrediction.append(str(prediction))
             f_out.write(str(prediction) + '\n')
+    with open(metricsOut, 'w') as f_out:
+        f_out.write('error(train): ' + str(error(trainPrediction, trainData)) + '\n')
+        f_out.write('error(test): ' + str(error(testPrediction, testData)) + '\n')
+
+    with open(trainOut, 'r') as f_in:
+        trainOutContent = f_in.readlines()
+    print(trainOutContent)         
+    with open(testOut, 'r') as f_in:
+        testOutContent = f_in.readlines()
+    print(testOutContent)      
+    with open(metricsOut, 'r') as f_in:
+        metricsOutContent = f_in.readlines()
+    print(metricsOutContent)   
